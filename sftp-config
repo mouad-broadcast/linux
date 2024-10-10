@@ -1,0 +1,14 @@
+vim /etc/ssh/sshd_config
+
+############################################
+Match User sftpuser
+        ForceCommand internal-sftp
+        AuthenticationMethods password
+        PubkeyAuthentication no
+        PasswordAuthentication yes
+        ChrootDirectory /var/sftp
+        PermitTunnel no
+        AllowAgentForwarding no
+        AllowTcpForwarding no
+        X11Forwarding no
+############################################
