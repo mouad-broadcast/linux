@@ -1,28 +1,16 @@
-// ============================================
-// YOUR EXISTING IMPORTS (Keep these!)
-// ============================================
 use memflow::plugins::{ConnectorArgs, Inventory, OsArgs};
 use memflow::prelude::v1::*;
 
-// YOUR EXISTING MODULES (Keep these!)
 mod discovery;
 mod pe;
-
-// ============================================
-// NEW MODULES (ADD THESE)
-// ============================================
 mod decrypt;
 mod encrypted_ptr;
 mod memory_adapter;
 
-// ============================================
-// NEW IMPORTS (ADD THESE)
-// ============================================
 use decrypt::StateDecrypt;
 use encrypted_ptr::EncryptedPtr64;
 use memory_adapter::{GameMemoryReader, MemoryReader};
 use std::sync::Arc;
-
 
 
 
@@ -152,6 +140,7 @@ println!("Target:");
 println!("  PID  : {}", process_info.pid);
 println!("  State: {:?}", process_info.state);
 
+
 // --------------------------------------------------
 // Open process
 // --------------------------------------------------
@@ -163,68 +152,24 @@ let mut process =
 // Module
 // --------------------------------------------------
 
-let module =
+let game_module =
     process.module_by_name(&process_info.name)?;
 
 println!();
 println!("Module:");
-println!("  Base : {:#x}", module.base);
-println!("  Size : {:#x}", module.size);
+println!("  Base : {:#x}", game_module.base);
+println!("  Size : {:#x}", game_module.size);
 
-// HNA MAIN
+// ============================================
+// DECRYPTION INITIALIZATION (FIXED)
+// ============================================
+//let pid = process_info.pid as i32;
+//let game_base = game_module.base.to_umem();
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // --- YOUR EXISTING MEMFLOW SETUP ---
-    let args = ConnectorArgs::parse();
-    let inventory = Inventory::scan();
-    let connector = inventory.create_connector(&args)?;
-    let os = inventory.create_os(&OsArgs::new(connector, None))?;
-    
-    // --- YOUR EXISTING GAME DISCOVERY ---
-    // Use your discovery module to find the game
-    let pid = discovery::find_pid()?; // Your existing function
-    let game_base = pe::get_base_address()?; // Your existing function
-    
-    // Get the process from memflow
-    let process = os.process_by_pid(pid)?;
-    let process = Arc::new(process);
-    
-    // --- YOUR EXISTING GAME INFO GATHERING ---
-    // ... your code that gets lots of game info and values
-    // This stays exactly as it was!
-    
-    // ============================================
-    // NEW: DECRYPTION INITIALIZATION
-    // ============================================
-    let memory_reader = GameMemoryReader::new(pid, game_base, process.clone());
-    let decryptor = StateDecrypt::new(game_base, &memory_reader)?;
-    println!("✅ Decryptor initialized!");
-    
-    // ============================================
-    // NEW: USE DECRYPTION ON YOUR DATA
-    // ============================================
-    // Example: If you have an encrypted address from your game reading
-    // Replace 0xDEADBEEF with an actual encrypted address you found
-    let encrypted_address = 0xDEADBEEF;
-    let decrypted = unsafe { decryptor.decrypt(encrypted_address) };
-    println!("🔓 Decrypted: {:#X} -> {:#X}", encrypted_address, decrypted);
-    
-    // Example: Using EncryptedPtr64
-    let encrypted_ptr = EncryptedPtr64::<u64>::new(encrypted_address);
-    if let Some(value) = encrypted_ptr.read_value(&memory_reader, &decryptor)? {
-        println!("📦 Value: {}", value);
-    }
-    
-    // ============================================
-    // YOUR EXISTING CODE CONTINUES
-    // ============================================
-    // ... rest of your existing main logic
-    
-    Ok(())
-}
-
-
-
+// Create memory reader with a reference to process
+//let mut memory_reader = GameMemoryReader::new(pid, game_base, &mut process);
+//let _decryptor = StateDecrypt::new(game_base, &mut memory_reader)?;  // Pass &mut
+//println!("✅ Decryptor initialized!");
 // --------------------------------------------------
 // PE inspection
 // --------------------------------------------------
@@ -237,8 +182,9 @@ println!("================================");
 let pe_info =
     match pe::inspect_pe(
         &mut process,
-        module.base.into(),
+        game_module.base.into(),
     ) {
+        // ... rest of the code continues
         Ok(info) => {
             println!("PE:");
             println!(
@@ -294,11 +240,11 @@ println!("================================");
 println!("KNOWN GLOBAL DIAGNOSTIC");
 println!("================================");
 
-let uworld_global = module.base + UWORLD;
+let uworld_global = game_module.base + UWORLD;
 
 println!(
     "Module base        : {:#018x}",
-    module.base.to_umem()
+    game_module.base.to_umem()
 );
 
 println!(
@@ -555,7 +501,7 @@ match process.read::<u64>(uworld_global.into()) {
 
 
 let decrypt_address =
-    module.base.to_umem() + DECRYPT_RVA;
+    game_module.base.to_umem() + DECRYPT_RVA;
 
 println!();
 println!("  Decrypt RVA       : {:#x}", DECRYPT_RVA);
@@ -572,9 +518,12 @@ match process.read::<u64>(decrypt_address.into()) {
         );
         println!("  Decrypt read      : PASS");
 
-println!("  Decrypt target bytes:");
-
-let decrypt_ptr = value;
+        // Remove the duplicate declaration
+        // let decrypt_ptr = value; // DELETE THIS LINE
+        
+        // Just use `value` directly
+        let decrypt_ptr = value; // Keep this if you want, it's fine
+        // ... rest of the code
 
 //for i in 0..32u64 {
 //for i in 0..128u64 {
@@ -718,7 +667,7 @@ println!("================================");
 let candidates =
     discovery::discover_candidates(
         &mut process,
-        module.base,
+        game_module.base,
         &pe_info,
     )?;
 
@@ -735,7 +684,7 @@ println!(
 // --------------------------------------------------
 
 let pattern_test_start =
-    module.base.to_umem();
+    game_module.base.to_umem();
 
 let pattern_test_size =
     0x1000usize;
@@ -768,7 +717,7 @@ println!("This test ASSUMES the UWorld pointer is valid.");
 println!("It does NOT decrypt or validate the UWorld global.");
 
 let uworld_global =
-    module.base + UWORLD;
+    game_module.base + UWORLD;
 
 println!();
 println!(
@@ -855,12 +804,12 @@ println!(
     if canonical { "YES" } else { "NO" }
 );
 
-// Check whether the value falls inside the target module.
+// Check whether the value falls inside the target game_module.
 let module_start =
-    module.base.to_umem();
+    game_module.base.to_umem();
 
 let module_end =
-    module_start + module.size;
+    module_start + game_module.size;
 
 let inside_module =
     uworld >= module_start
@@ -900,8 +849,8 @@ println!();
 println!("UWorld global qword map");
 println!("======================");
 
-let module_start = module.base.to_umem();
-let module_end = module_start + module.size;
+let module_start = game_module.base.to_umem();
+let module_end = module_start + game_module.size;
 
 for offset in (0u64..0x100).step_by(8) {
     let address = uworld_global + offset;
@@ -1359,6 +1308,60 @@ println!(
     "the actual UWorld address."
 );
 
+
+
+println!();
+println!(
+    "This result assumes the raw UWorld value is already"
+);
+println!(
+    "the actual UWorld address."
+);
+
+// ============================================
+// DECRYPTION TEST (Added at the end)
+// ============================================
+println!();
+println!("================================");
+println!("DECRYPTION TEST");
+println!("================================");
+println!("🚀 Starting decryption test...");
+
+let pid = process_info.pid as i32;
+let game_base = game_module.base.to_umem();
+println!("📌 PID: {}, Game Base: {:#X}", pid, game_base);
+
+println!("📌 Creating memory reader...");
+let mut memory_reader = GameMemoryReader::new(pid, game_base, &mut process);
+
+println!("📌 Creating decryptor...");
+let _decryptor = match StateDecrypt::new(game_base, &mut memory_reader) {
+    Ok(d) => {
+        println!("✅ Decryptor initialized successfully!");
+        d
+    }
+    Err(e) => {
+        println!("❌ Failed to initialize decryptor: {}", e);
+        return Ok(());
+    }
+};
+
+// Use the existing DECRYPT_RVA constant (defined at line 473)
+let decrypt_address = game_base + DECRYPT_RVA;
+println!("📌 Reading decrypt address at: {:#X}", decrypt_address);
+
+match process.read::<u64>(decrypt_address.into()) {
+    Ok(encrypted_ptr) => {
+        println!("📌 Encrypted pointer read: {:#X}", encrypted_ptr);
+        let decrypted = unsafe { _decryptor.decrypt(encrypted_ptr) };
+        println!("🔓 Encrypted: {:#X} -> Decrypted: {:#X}", encrypted_ptr, decrypted);
+    }
+    Err(e) => {
+        println!("❌ Could not read decrypt address: {}", e);
+    }
+}
+
+println!("🏁 Decryption test complete!");
 Ok(())
  
 
