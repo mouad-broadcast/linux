@@ -21,3 +21,10 @@ https://store1-mvn.brqz.online/hls2/04/00006/o39vkox4lwhp_,l,n,h,x,.urlset/maste
 https://tmp-en.brqz.online/hls2/01/00006/imfnns55pbtc_,l,n,h,x,.urlset/master.m3u8?t=aKaA0giWVRUcPTJLOCexArutSuqsqjL5sl7FmQFfApM&s=1794079943&e=43200&v=372852740&i=0.0&sp=0
 #EXTINF:-1 group-title="أنت من أحب",أنت من أحب Episode 23
 https://cdn2-zzl.brqz.online/hls2/01/00008/j83ey3t60quu_,l,n,h,x,o,.urlset/master.m3u8?t=WRAXbo15ytodUJ1Wpuhz_3HoODT1EXH19iK9v57xRvU&s=1794079948&e=43200&v=372852819&i=0.0&sp=0
+#EXTM3U
+#EXTINF:-1 group-title="أنت من أحب",أنت من أحب Episode 21
+https://store1-mvn.brqz.online/hls2/04/00006/o39vkox4lwhp_,l,n,h,x,.urlset/master.m3u8?t=AUCJREW-P9zmBnqcT-qGG7tWO9jdYhUYOrA_DGZgT6M&s=1794136354&e=43200&v=372852654&i=0.0&sp=0
+#EXTINF:-1 group-title="أنت من أحب",أنت من أحب Episode 22
+https://tmp-en.brqz.online/hls2/01/00006/imfnns55pbtc_,l,n,h,x,.urlset/master.m3u8?t=PllRmLurccqXwjoaDaWBy-rvJu5u3LdobdBh9dr63-4&s=1794136358&e=43200&v=372852740&i=0.0&sp=0
+#EXTINF:-1 group-title="أنت من أحب",أنت من أحب Episode 23
+https://cdn2-zzl.brqz.online/hls2/01/00008/j83ey3t60quu_,l,n,h,x,o,.urlset/master.m3u8?t=r9apYNZO34D32tKfdh8OYPTjv05McgVY7PgL1wFgtQ0&s=1794136363&e=43200&v=372852819&i=0.0&sp=0
